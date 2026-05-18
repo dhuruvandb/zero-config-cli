@@ -1,9 +1,11 @@
 {
   "name": "zero-config-cli",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "Generate production-ready full-stack projects from the terminal — zero config required.",
   "type": "module",
-  "bin": "dist/index.js",
+  "bin": {
+    "zero-config-cli": "dist/index.js"
+  },
   "exports": {
     ".": "./dist/index.js"
   },
