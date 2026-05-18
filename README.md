@@ -8,10 +8,13 @@
 [![npm downloads](https://img.shields.io/npm/dt/zero-config-cli?style=for-the-badge&logo=npm&color=37b24d)](https://www.npmjs.com/package/zero-config-cli)
 [![license](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)](LICENSE)
 [![node](https://img.shields.io/badge/node-%3E%3D18-339933?style=for-the-badge&logo=node.js)](package.json)
+[![website](https://img.shields.io/badge/website-zero--config.vercel.app-2ec4b6?style=for-the-badge&logo=vercel)](https://zero-config.vercel.app)
 
 ```
 npx zero-config-cli my-project
 ```
+
+🌐 **Live site:** [zero-config.vercel.app](https://zero-config.vercel.app)
 
 </div>
 

@@ -1,7 +1,15 @@
 {
   "name": "zero-config-cli",
-  "version": "1.0.3",
+  "version": "1.0.5",
   "description": "Generate production-ready full-stack projects from the terminal — zero config required.",
+  "homepage": "https://zero-config.vercel.app/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dhuruvandb/zero-config-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dhuruvandb/zero-config-cli/issues"
+  },
   "type": "module",
   "bin": {
     "zero-config-cli": "dist/index.js"
