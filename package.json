@@ -1,0 +1,53 @@
+{
+  "name": "zero-config-cli",
+  "version": "1.0.1",
+  "description": "Generate production-ready full-stack projects from the terminal — zero config required.",
+  "type": "module",
+  "bin": "dist/index.js",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run build"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "zero-config",
+    "starter",
+    "generator",
+    "full-stack",
+    "react",
+    "angular",
+    "vue",
+    "nextjs",
+    "express",
+    "nestjs",
+    "fastify"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@clack/prompts": "^0.10.1",
+    "commander": "^13.1.0",
+    "picocolors": "^1.1.1",
+    "unzipper": "^0.12.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.7",
+    "@types/unzipper": "^0.10.10",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.0"
+  }
+}
