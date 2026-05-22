@@ -172,8 +172,7 @@ async function runInteractive(outputDir: string, options: Record<string, any>): 
             options.install === false ? 'skip' : await promptInstallScope();
 
         if (installScope !== 'skip') {
-            const installSpinner = spinner();
-            installSpinner.start('Installing dependencies...');
+            console.log(`  ${pc.cyan('Installing dependencies...')}`);
 
             const { installed, failed } = await installDependencies(
                 installScope,
@@ -181,12 +180,12 @@ async function runInteractive(outputDir: string, options: Record<string, any>): 
                 result.backendPath,
             );
 
-            if (failed.length > 0) {
-                installSpinner.stop(
-                    `${pc.green(`Installed in: ${installed.join(', ') || 'none'}`)} ${pc.red(`Failed: ${failed.join(', ') || 'none'}`)}`,
-                );
+            if (failed.length > 0 && installed.length === 0) {
+                console.log(`  ${pc.red(`✖ Installation failed in ${failed.join(' & ')}`)}`);
+            } else if (failed.length > 0) {
+                console.log(`  ${pc.green(`✔ Installed in ${installed.join(' & ')}`)}  ${pc.red(`✖ Failed in ${failed.join(' & ')}`)}`);
             } else if (installed.length > 0) {
-                installSpinner.stop(`${pc.green(`Dependencies installed in ${installed.join(' & ')}`)}`);
+                console.log(`  ${pc.green(`✔ Dependencies installed in ${installed.join(' & ')}`)}`);
             }
         }
 
@@ -244,15 +243,19 @@ async function runNonInteractive(outputDir: string, options: Record<string, any>
 
         if (options.install !== false) {
             console.log(pc.cyan('\nInstalling dependencies...'));
+
             const { installed, failed } = await installDependencies(
                 'both',
                 result.frontendPath,
                 result.backendPath,
             );
-            if (failed.length > 0) {
-                console.log(pc.yellow(`Installed: ${installed.join(', ') || 'none'}  Failed: ${failed.join(', ') || 'none'}`));
-            } else {
-                console.log(pc.green(`Dependencies installed in ${installed.join(' & ')}`));
+
+            if (failed.length > 0 && installed.length === 0) {
+                console.log(pc.red(`✖ Installation failed in ${failed.join(' & ')}`));
+            } else if (failed.length > 0) {
+                console.log(pc.green(`✔ Installed in ${installed.join(' & ')}`) + '  ' + pc.red(`✖ Failed in ${failed.join(' & ')}`));
+            } else if (installed.length > 0) {
+                console.log(pc.green(`✔ Dependencies installed in ${installed.join(' & ')}`));
             }
         }
 
