@@ -2,6 +2,7 @@
 // CLI interface — Commander setup + interactive prompts via @clack/prompts
 // ---------------------------------------------------------------------------
 
+import { createRequire } from 'node:module';
 import { Command } from 'commander';
 import { intro, outro, select, text, spinner, note, cancel, isCancel } from '@clack/prompts';
 import pc from 'picocolors';
@@ -10,7 +11,9 @@ import { generateProject } from './generator.js';
 import { installDependencies, type InstallScope } from './installer.js';
 import type { GenerateResult } from './generator.js';
 
-const PKG = { version: '1.0.0', name: 'zero-config-cli' } as const;
+const require = createRequire(import.meta.url);
+const { version, name } = require('../package.json');
+const PKG = { version, name } as const;
 
 /** Prompt user to select a frontend framework. */
 async function promptFrontend(): Promise<string> {

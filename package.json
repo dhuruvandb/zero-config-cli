@@ -1,6 +1,6 @@
 {
   "name": "zero-config-cli",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Generate production-ready full-stack projects from the terminal — zero config required.",
   "homepage": "https://zero-config.vercel.app/",
   "repository": {
