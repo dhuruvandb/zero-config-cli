@@ -5,7 +5,8 @@
 
 import * as path from 'node:path';
 import * as fs from 'node:fs';
-import { ALLOWED_TEMPLATES, FRONTEND_KEYS, BACKEND_KEYS } from './registry.js';
+import crypto from 'node:crypto';
+import { ALLOWED_TEMPLATES, FRONTEND_KEYS, BACKEND_KEYS, PROVIDER_MAP } from './registry.js';
 import { resolveTemplateSource } from './resolver.js';
 import { readLocalTemplateFolder, writeTemplateFiles } from './copier.js';
 import { fetchZip, extractTemplateFolder } from './downloader.js';
@@ -126,6 +127,41 @@ export async function generateProject(opts: GenerateOptions): Promise<GenerateRe
     // --- Write to disk ---
     const allFiles = [...frontendFiles, ...backendFiles];
     writeTemplateFiles(allFiles, outputDir);
+
+    // --- Generate .env file with development defaults ---
+    const dbProvider = PROVIDER_MAP[opts.database] || 'postgresql';
+    const defaultDbUrls: Record<string, string> = {
+        postgresql: 'postgresql://postgres:postgres@localhost:5432/myapp?schema=public',
+        mysql: 'mysql://root:root@localhost:3306/myapp',
+        sqlserver: 'sqlserver://localhost:1433;database=myapp;user=sa;password=your_password',
+        sqlite: 'file:./dev.db',
+        cockroachdb: 'postgresql://root@localhost:26257/myapp?schema=public',
+        mongodb: 'mongodb://localhost:27017/myapp',
+    };
+    const dbUrl = defaultDbUrls[dbProvider] || `file:./dev.db`;
+
+    const accessSecret = crypto.randomBytes(32).toString('hex');
+    const refreshSecret = crypto.randomBytes(32).toString('hex');
+
+    const envContent = [
+        `# Database Connection (Prisma)`,
+        `DATABASE_URL="${dbUrl}"`,
+        ``,
+        `# Server Configuration`,
+        `PORT=5000`,
+        `FRONTEND_URL=http://localhost:5173`,
+        ``,
+        `# JWT Secrets (auto-generated — replace in production)`,
+        `ACCESS_TOKEN_SECRET=${accessSecret}`,
+        `REFRESH_TOKEN_SECRET=${refreshSecret}`,
+        ``,
+        `# JWT Expiry`,
+        `ACCESS_TOKEN_EXPIRY=15m`,
+        `REFRESH_TOKEN_EXPIRY=7d`,
+        ``,
+    ].join('\n');
+
+    fs.writeFileSync(path.resolve(outputDir, backendFolder, '.env'), envContent, 'utf-8');
 
     return {
         frontendPath: path.resolve(outputDir, frontendFolder),

@@ -33,6 +33,9 @@ function walkDir(dir: string, relativePrefix: string, files: TemplateFile[]): vo
     const entries = fs.readdirSync(dir, { withFileTypes: true });
 
     for (const entry of entries) {
+        // Skip node_modules — they bloat generated projects and cause hangs
+        if (entry.name === 'node_modules') continue;
+
         const fullPath = path.join(dir, entry.name);
         const relPath = relativePrefix ? `${relativePrefix}/${entry.name}` : entry.name;
 
