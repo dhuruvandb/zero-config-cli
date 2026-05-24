@@ -189,7 +189,7 @@ export async function generateProject(opts: GenerateOptions): Promise<GenerateRe
 // Docker Compose generator
 // ---------------------------------------------------------------------------
 
-interface ComposeOptions {
+export interface ComposeOptions {
     frontend: string;
     backend: string;
     database: string;
@@ -198,7 +198,7 @@ interface ComposeOptions {
     outputDir: string;
 }
 
-function generateDockerCompose(opts: ComposeOptions): string {
+export function generateDockerCompose(opts: ComposeOptions): string {
     const feDocker = FRONTEND_DOCKER_CONFIG[opts.frontend];
     const beDocker = BACKEND_DOCKER_CONFIG[opts.backend];
     const feInfo = templateData[opts.frontend];
