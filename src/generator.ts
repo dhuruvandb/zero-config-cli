@@ -6,7 +6,9 @@
 import * as path from 'node:path';
 import * as fs from 'node:fs';
 import crypto from 'node:crypto';
-import { ALLOWED_TEMPLATES, FRONTEND_KEYS, BACKEND_KEYS, PROVIDER_MAP } from './registry.js';
+import { ALLOWED_TEMPLATES, FRONTEND_KEYS, BACKEND_KEYS, PROVIDER_MAP, templateData } from './registry.js';
+import { FRONTEND_DOCKER_CONFIG, BACKEND_DOCKER_CONFIG, DATABASE_DOCKER_CONFIG } from './registry.js';
+import type { DatabaseDockerConfig } from './registry.js';
 import { resolveTemplateSource } from './resolver.js';
 import { readLocalTemplateFolder, writeTemplateFiles } from './copier.js';
 import { fetchZip, extractTemplateFolder } from './downloader.js';
@@ -163,12 +165,139 @@ export async function generateProject(opts: GenerateOptions): Promise<GenerateRe
 
     fs.writeFileSync(path.resolve(outputDir, backendFolder, '.env'), envContent, 'utf-8');
 
+    // --- Generate docker-compose.yml at project root ---
+    const composeContent = generateDockerCompose({
+        frontend: opts.frontend,
+        backend: opts.backend,
+        database: opts.database,
+        frontendFolder,
+        backendFolder,
+        outputDir,
+    });
+    fs.writeFileSync(path.resolve(outputDir, 'docker-compose.yml'), composeContent, 'utf-8');
+
     return {
         frontendPath: path.resolve(outputDir, frontendFolder),
         backendPath: path.resolve(outputDir, backendFolder),
         frontendFolder,
         backendFolder,
     };
+}
+
+
+// ---------------------------------------------------------------------------
+// Docker Compose generator
+// ---------------------------------------------------------------------------
+
+interface ComposeOptions {
+    frontend: string;
+    backend: string;
+    database: string;
+    frontendFolder: string;
+    backendFolder: string;
+    outputDir: string;
+}
+
+function generateDockerCompose(opts: ComposeOptions): string {
+    const feDocker = FRONTEND_DOCKER_CONFIG[opts.frontend];
+    const beDocker = BACKEND_DOCKER_CONFIG[opts.backend];
+    const feInfo = templateData[opts.frontend];
+    const beInfo = templateData[opts.backend];
+
+    // --- Database service ---
+    const dbLines: string[] = [];
+    const volumeLines: string[] = [];
+    let dbServiceName = '';
+    let dockerDbUrl = '';
+
+    if (opts.database !== 'sqlite') {
+        const dbConfig: DatabaseDockerConfig | undefined = DATABASE_DOCKER_CONFIG[opts.database];
+        if (dbConfig) {
+            dbServiceName = `${opts.database}-db`;
+            dockerDbUrl = dbConfig.dbUrlTemplate.replace('{{HOST}}', dbServiceName);
+
+            const envEntries = Object.entries(dbConfig.envVars)
+                .map(([k, v]) => `      ${k}: "${v}"`)
+                .join('\n');
+
+            dbLines.push(`  ${dbServiceName}:`);
+            dbLines.push(`    image: ${dbConfig.image}`);
+            dbLines.push(`    restart: unless-stopped`);
+            dbLines.push(`    ports:`);
+            dbLines.push(`      - "${dbConfig.containerPort}:${dbConfig.containerPort}"`);
+            dbLines.push(`    environment:`);
+            dbLines.push(envEntries);
+            dbLines.push(`    healthcheck:`);
+            dbLines.push(`      test: ${JSON.stringify(dbConfig.healthcheck.test)}`);
+            dbLines.push(`      interval: ${dbConfig.healthcheck.interval}`);
+            dbLines.push(`      retries: ${dbConfig.healthcheck.retries}`);
+            dbLines.push(`    volumes:`);
+            dbLines.push(`      - ${dbConfig.volumeName}:/var/lib/${opts.database}/data`);
+
+            volumeLines.push(`  ${dbConfig.volumeName}:`);
+        }
+    }
+
+    // --- Backend service ---
+    const feHostPort = feInfo?.port ?? feDocker?.containerPort ?? 3000;
+    const beHostPort = beInfo?.port ?? beDocker?.containerPort ?? 5000;
+    const feUrl = `http://localhost:${feHostPort}`;
+
+    const backendLines: string[] = [];
+    backendLines.push(`  backend:`);
+    backendLines.push(`    build: ./${opts.backendFolder}`);
+    backendLines.push(`    restart: unless-stopped`);
+    backendLines.push(`    env_file: ./${opts.backendFolder}/.env`);
+    backendLines.push(`    ports:`);
+    backendLines.push(`      - "${beHostPort}:${beDocker?.containerPort ?? 5000}"`);
+    backendLines.push(`    environment:`);
+    if (dbServiceName && dockerDbUrl) {
+        backendLines.push(`      DATABASE_URL: "${dockerDbUrl}"`);
+    } else if (opts.database === 'sqlite') {
+        backendLines.push(`      DATABASE_URL: "file:./dev.db"`);
+    }
+    backendLines.push(`      PORT: "${beDocker?.containerPort ?? 5000}"`);
+    backendLines.push(`      FRONTEND_URL: "${feUrl}"`);
+    backendLines.push(`    command: sh -c "./node_modules/.bin/prisma db push && ${beDocker?.startCommand ?? 'node dist/index.js'}"`);
+    if (dbServiceName) {
+        backendLines.push(`    depends_on:`);
+        backendLines.push(`      ${dbServiceName}:`);
+        backendLines.push(`        condition: service_healthy`);
+    }
+
+    // --- Frontend service ---
+    const frontendLines: string[] = [];
+    frontendLines.push(`  frontend:`);
+    frontendLines.push(`    build: ./${opts.frontendFolder}`);
+    frontendLines.push(`    restart: unless-stopped`);
+    frontendLines.push(`    ports:`);
+    frontendLines.push(`      - "${feHostPort}:${feDocker?.containerPort ?? 80}"`);
+    frontendLines.push(`    depends_on:`);
+    frontendLines.push(`      - backend`);
+
+    // --- Assemble ---
+    const lines: string[] = [
+        '# =============================================================================',
+        `# docker-compose.yml — auto-generated by zero-config-cli`,
+        `# Stack: ${opts.frontend} (frontend) + ${opts.backend} (backend) + ${opts.database}`,
+        '# =============================================================================',
+        '',
+        'services:',
+        ...dbLines,
+        ...backendLines,
+        '',
+        ...frontendLines,
+    ];
+
+    if (volumeLines.length > 0) {
+        lines.push('');
+        lines.push('volumes:');
+        lines.push(...volumeLines);
+    }
+
+    lines.push('');
+
+    return lines.join('\n');
 }
 
 

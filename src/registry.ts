@@ -174,6 +174,94 @@ export const PROVIDER_MAP: Record<string, string> = {
     mongodb: 'mongodb',
 };
 
+// ---------------------------------------------------------------------------
+// Docker configuration for all stack components
+// ---------------------------------------------------------------------------
+
+export interface DockerContainerConfig {
+    /** Internal port the container listens on (matches EXPOSE in Dockerfile) */
+    containerPort: number;
+    /** Start command for the container (the CMD from Dockerfile). Only needed for backends. */
+    startCommand?: string;
+}
+
+/** Docker config for each frontend template (keyed by template key). */
+export const FRONTEND_DOCKER_CONFIG: Record<string, DockerContainerConfig> = {
+    react: { containerPort: 80 },    // nginx
+    angular: { containerPort: 4000 },  // SSR Node.js
+    vuejs: { containerPort: 80 },    // nginx
+    nextjs: { containerPort: 3000 },  // Next.js standalone
+};
+
+/** Docker config for each backend template (keyed by template key). */
+export const BACKEND_DOCKER_CONFIG: Record<string, DockerContainerConfig> = {
+    express: { containerPort: 5000, startCommand: 'node dist/index.js' },
+    nestjs: { containerPort: 5000, startCommand: 'node dist/main.js' },
+    fastify: { containerPort: 5000, startCommand: 'node dist/index.js' },
+};
+
+export interface DatabaseDockerConfig {
+    image: string;
+    containerPort: number;
+    envVars: Record<string, string>;
+    healthcheck: { test: string[]; interval: string; retries: number };
+    volumeName: string;
+    /** Prisma DATABASE_URL template; use {{HOST}} as placeholder for container hostname */
+    dbUrlTemplate: string;
+}
+
+/** Docker config for each database (keyed by database id). */
+export const DATABASE_DOCKER_CONFIG: Record<string, DatabaseDockerConfig> = {
+    postgresql: {
+        image: 'postgres:16-alpine',
+        containerPort: 5432,
+        envVars: { POSTGRES_USER: 'postgres', POSTGRES_PASSWORD: 'postgres', POSTGRES_DB: 'myapp' },
+        healthcheck: { test: ['CMD-SHELL', 'pg_isready -U postgres'], interval: '5s', retries: 5 },
+        volumeName: 'pgdata',
+        dbUrlTemplate: 'postgresql://postgres:postgres@{{HOST}}:5432/myapp?schema=public',
+    },
+    mysql: {
+        image: 'mysql:8',
+        containerPort: 3306,
+        envVars: { MYSQL_ROOT_PASSWORD: 'root', MYSQL_DATABASE: 'myapp' },
+        healthcheck: { test: ['CMD-SHELL', 'mysqladmin ping -h localhost -uroot -proot'], interval: '5s', retries: 5 },
+        volumeName: 'mysqldata',
+        dbUrlTemplate: 'mysql://root:root@{{HOST}}:3306/myapp',
+    },
+    mariadb: {
+        image: 'mariadb:11',
+        containerPort: 3306,
+        envVars: { MARIADB_ROOT_PASSWORD: 'root', MARIADB_DATABASE: 'myapp' },
+        healthcheck: { test: ['CMD-SHELL', 'mysqladmin ping -h localhost -uroot -proot'], interval: '5s', retries: 5 },
+        volumeName: 'mariadbdata',
+        dbUrlTemplate: 'mysql://root:root@{{HOST}}:3306/myapp',
+    },
+    sqlserver: {
+        image: 'mcr.microsoft.com/mssql/server:2022-latest',
+        containerPort: 1433,
+        envVars: { ACCEPT_EULA: 'Y', MSSQL_SA_PASSWORD: 'your_password', MSSQL_PID: 'Express' },
+        healthcheck: { test: ['CMD-SHELL', '/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P your_password -C -Q "SELECT 1" || exit 1'], interval: '10s', retries: 10 },
+        volumeName: 'sqldata',
+        dbUrlTemplate: 'sqlserver://{{HOST}}:1433;database=myapp;user=sa;password=your_password;trustServerCertificate=true',
+    },
+    cockroachdb: {
+        image: 'cockroachdb/cockroach:latest',
+        containerPort: 26257,
+        envVars: { COCKROACH_DATABASE: 'myapp' },
+        healthcheck: { test: ['CMD-SHELL', 'cockroach node status --insecure --host=localhost || exit 1'], interval: '5s', retries: 5 },
+        volumeName: 'cockroachdata',
+        dbUrlTemplate: 'postgresql://root@{{HOST}}:26257/myapp?schema=public',
+    },
+    mongodb: {
+        image: 'mongo:7',
+        containerPort: 27017,
+        envVars: { MONGO_INITDB_DATABASE: 'myapp' },
+        healthcheck: { test: ['CMD-SHELL', 'mongosh --quiet --eval "db.runCommand({ ping: 1 })" || exit 1'], interval: '5s', retries: 5 },
+        volumeName: 'mongodata',
+        dbUrlTemplate: 'mongodb://{{HOST}}:27017/myapp',
+    },
+};
+
 // --- Allowed Template Whitelist -------------------------------------------
 // Ported from zero-config/Backend/src/app.service.ts
 
