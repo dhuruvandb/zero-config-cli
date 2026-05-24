@@ -57,7 +57,8 @@ Every time you start a new project, you spend **45–90 minutes** doing the same
 ✅ bcrypt password hashing (10 rounds) with strong validation  
 ✅ Pre-written tests (auth flow, CRUD, edge cases, auth guards)  
 ✅ TypeScript, ESLint, environment variables, CORS — all wired up  
-✅ Zero configuration files to touch before you start coding
+✅ Zero configuration files to touch before you start coding  
+✅ **Docker-ready** — Each template ships with a production Dockerfile
 
 ---
 
@@ -271,9 +272,10 @@ This means it works **offline** if you have the templates locally, or **online**
 | CRUD endpoints with owner verification      | 20 min       | 0                    | **20 min**         |
 | Test setup + writing initial tests          | 15 min       | 0                    | **15 min**         |
 | CORS, env vars, security headers            | 10 min       | 0                    | **10 min**         |
-| **Total per project**                       | **~110 min** | **~30 sec**          | **~109 min saved** |
+| Dockerfile + containerization setup         | 15 min       | 0                    | **15 min**         |
+| **Total per project**                       | **~125 min** | **~30 sec**          | **~124 min saved** |
 
-**That's nearly 2 hours saved per project.** If you start 10 projects a year, that's **18 hours** — almost a full working week — returned to building actual features.
+**That's over 2 hours saved per project.** If you start 10 projects a year, that's **20+ hours** — almost 3 full working days — returned to building actual features.
 
 ---
 
@@ -300,6 +302,38 @@ Most generators give you **one framework**. Zero-Config CLI gives you **any comb
 
 ---
 
+## � Docker Support
+
+Every generated template includes a **production-grade Dockerfile** optimized for multi-stage builds.
+
+### Quick Start
+
+```bash
+# Build the image (replace 'react' with your template)
+cd my-project/react
+docker build -t my-app .
+
+# Run the container
+docker run -d -p 8080:80 my-app
+```
+
+### Port Mapping Reference
+
+| Template | Internal Port | Example Run Command                         |
+| -------- | ------------- | ------------------------------------------- |
+| React    | `80` (nginx)  | `docker run -d -p 8080:80 my-react-app`     |
+| Vue.js   | `80` (nginx)  | `docker run -d -p 8081:80 my-vue-app`       |
+| Next.js  | `3000`        | `docker run -d -p 3000:3000 my-next-app`    |
+| Angular  | `4000`        | `docker run -d -p 4000:4000 my-angular-app` |
+| Express  | `5000`        | `docker run -d -p 5000:5000 my-express-app` |
+| NestJS   | `5000`        | `docker run -d -p 5001:5000 my-nest-app`    |
+| Fastify  | `5000`        | `docker run -d -p 5002:5000 my-fastify-app` |
+
+> **Note:** Backend templates (Express, NestJS, Fastify) connect to a database via Prisma.
+> Set the `DATABASE_URL` environment variable to point to your database instance.
+
+---
+
 ## 🗺️ The Zero-Config Ecosystem
 
 This CLI is part of a larger ecosystem:
@@ -308,7 +342,7 @@ This CLI is part of a larger ecosystem:
 | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
 | [zero-config](https://github.com/dhuruvandb/zero-config)                     | 🌐 **Web app** — Visual generator at [zero-config.vercel.app](https://zero-config.vercel.app/) |
 | [zero-config-cli](https://github.com/dhuruvandb/zero-config-cli)             | 💻 **You are here** — Terminal-based generator                                                 |
-| [zero-config-templates](https://github.com/dhuruvandb/zero-config-templates) | 📦 **Boilerplate source** — All 7 templates with auth, CRUD, and tests                         |
+| [zero-config-templates](https://github.com/dhuruvandb/zero-config-templates) | 📦 **Boilerplate source** — All 7 templates with auth, CRUD, tests, and Dockerfiles            |
 
 ---
 
