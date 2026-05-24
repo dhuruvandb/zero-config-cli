@@ -58,7 +58,8 @@ Every time you start a new project, you spend **45–90 minutes** doing the same
 ✅ Pre-written tests (auth flow, CRUD, edge cases, auth guards)  
 ✅ TypeScript, ESLint, environment variables, CORS — all wired up  
 ✅ Zero configuration files to touch before you start coding  
-✅ **Docker-ready** — Each template ships with a production Dockerfile
+✅ **Docker-ready** — Each template ships with a production Dockerfile  
+✅ **Docker Compose** — Auto-generated `docker-compose.yml` wires frontend + backend + database
 
 ---
 
@@ -73,6 +74,41 @@ npx zero-config-cli my-project -f react -b express -d postgresql
 ```
 
 After generation, the CLI can optionally run `npm install` for you — choose **both**, **backend only**, **frontend only**, or **skip**.
+
+---
+
+## 🐳 Docker Compose (one-command deploy)
+
+Every generated project includes an auto-generated `docker-compose.yml` that wires up the
+frontend, backend, and database into a single command:
+
+```bash
+cd my-project
+docker compose up -d
+```
+
+This starts:
+
+- **Database** container (PostgreSQL, MySQL, etc.) with health checks and persistent storage
+- **Backend** container (Express / NestJS / Fastify) with Prisma auto-migration on startup
+- **Frontend** container (React / Vue / Angular / Next.js) pointing at the backend
+
+The `docker-compose.yml` is stack-aware — it adapts the ports, environment variables,
+and database service based on your choices, for all **84 combinations**.
+
+### Port mappings
+
+| Service  | Host Port | Container Port |
+| -------- | --------- | -------------- |
+| React    | `5173`    | `80` (nginx)   |
+| Vue.js   | `5173`    | `80` (nginx)   |
+| Angular  | `4200`    | `4000` (SSR)   |
+| Next.js  | `3000`    | `3000`         |
+| Backend  | `5000`    | `5000`         |
+| Database | _native_  | _native_       |
+
+> **No manual configuration needed** — JWT secrets, database URLs, and CORS are
+> all set automatically. Just run `docker compose up -d` and go.
 
 ---
 
@@ -293,12 +329,13 @@ There are plenty of project generators out there. Here's why `zero-config-cli` s
 | **Prisma ORM pre-configured**                         |       ✅        |         ❌         |        ❌         |          ❌           |
 | **Pre-written tests**                                 |       ✅        |         ❌         |        ❌         |          ❌           |
 | **Custom folder names**                               |       ✅        |         ❌         |        ❌         |          ❌           |
+| **Docker Compose auto-generated**                     |       ✅        |         ❌         |        ❌         |          ❌           |
 | **Interactive prompts**                               |       ✅        |         ✅         |        ✅         |          ✅           |
 | **Offline support**                                   |       ✅        |         ❌         |        ❌         |          ❌           |
 | **No cloud costs**                                    |       ✅        |         ✅         |        ✅         |          ✅           |
 | **Zero config to start coding**                       |       ✅        |         ❌         |        ❌         |          ❌           |
 
-Most generators give you **one framework**. Zero-Config CLI gives you **any combination** of 4 frontends, 3 backends, and 7 databases — **28 distinct stack combinations** — all with auth, CRUD, and tests built in.
+Most generators give you **one framework**. Zero-Config CLI gives you **any combination** of 4 frontends, 3 backends, and 7 databases — **84 distinct stack combinations** — all with auth, CRUD, tests, and Docker Compose built in.
 
 ---
 
@@ -369,11 +406,12 @@ npm run build
 ### Test Coverage
 
 ```
- ✓ __tests__/registry.test.ts    (14 tests)  — Template metadata validation
- ✓ __tests__/prisma-swap.test.ts (11 tests)  — Prisma provider regex swap
+ ✓ __tests__/registry.test.ts       (31 tests)  — Template metadata + Docker configs
+ ✓ __tests__/prisma-swap.test.ts    (11 tests)  — Prisma provider regex swap
+ ✓ __tests__/docker-compose.test.ts (25 tests)  — Docker Compose generation for all stacks
 
- Test Files  2 passed (2)
-      Tests  25 passed (25)
+ Test Files  3 passed (3)
+      Tests  67 passed (67)
 ```
 
 ---
