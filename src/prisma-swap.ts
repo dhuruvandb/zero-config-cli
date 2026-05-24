@@ -12,6 +12,8 @@ import { PROVIDER_MAP } from './registry.js';
  * Targets only the `datasource db { ... }` block's provider line,
  * not the `generator client { ... }` block.
  *
+ * Also handles MongoDB-specific schema transformations (e.g. @map("_id")).
+ *
  * Ported from the backend's `replacePrismaProvider()`.
  */
 export function replacePrismaProvider(
@@ -29,16 +31,24 @@ export function replacePrismaProvider(
     for (const file of files) {
         if (!file.path.endsWith('prisma/schema.prisma')) continue;
 
-        const content = file.content.toString('utf-8');
+        let content = file.content.toString('utf-8');
 
-        // Match: datasource db { ... provider = "current_provider" ... }
-        const updated = content.replace(
+        // Replace datasource provider
+        content = content.replace(
             /(datasource db\s*\{[\s\S]*?provider\s*=\s*")[a-z0-9\-_]+(")/,
             `$1${provider}$2`,
         );
 
-        if (updated !== content) {
-            file.content = Buffer.from(updated, 'utf-8');
+        // MongoDB-specific: id fields need @map("_id") and auto() instead of cuid()/uuid()
+        if (database === 'mongodb') {
+            content = content.replace(
+                /id\s+String\s+@id\s+@default\((cuid|uuid)\(\)\)/g,
+                'id  String   @id @default(auto()) @map("_id") @db.ObjectId',
+            );
+        }
+
+        if (content !== file.content.toString('utf-8')) {
+            file.content = Buffer.from(content, 'utf-8');
         }
     }
 }
@@ -59,14 +69,24 @@ export function replacePrismaTestProvider(
     for (const file of files) {
         if (!file.path.endsWith('prisma/schema.test.prisma')) continue;
 
-        const content = file.content.toString('utf-8');
-        const updated = content.replace(
+        let content = file.content.toString('utf-8');
+
+        // Replace datasource provider
+        content = content.replace(
             /(datasource db\s*\{[\s\S]*?provider\s*=\s*")[a-z0-9\-_]+(")/,
             `$1${provider}$2`,
         );
 
-        if (updated !== content) {
-            file.content = Buffer.from(updated, 'utf-8');
+        // MongoDB-specific: id fields need @map("_id") and auto() instead of cuid()/uuid()
+        if (database === 'mongodb') {
+            content = content.replace(
+                /id\s+String\s+@id\s+@default\((cuid|uuid)\(\)\)/g,
+                'id  String   @id @default(auto()) @map("_id") @db.ObjectId',
+            );
+        }
+
+        if (content !== file.content.toString('utf-8')) {
+            file.content = Buffer.from(content, 'utf-8');
         }
     }
 }

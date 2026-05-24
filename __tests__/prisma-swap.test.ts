@@ -114,4 +114,31 @@ describe('replacePrismaProvider', () => {
         expect(files[0].content.toString('utf-8')).toBe(originalPkg);
         expect(files[1].content.toString('utf-8')).toBe(originalEnv);
     });
+
+    it('adds @map("_id") for mongodb provider', () => {
+        const files = [makeTemplateFile('prisma/schema.prisma', makePrismaSchema('postgresql'))];
+        replacePrismaProvider(files, 'mongodb');
+        const result = files[0].content.toString('utf-8');
+        expect(result).toContain('@map("_id")');
+        expect(result).toContain('@db.ObjectId');
+        expect(result).toContain('@default(auto())');
+        expect(result).toContain('provider = "mongodb"');
+    });
+
+    it('handles uuid() id default for mongodb', () => {
+        const schema = makePrismaSchema('postgresql').replace('cuid()', 'uuid()');
+        const files = [makeTemplateFile('prisma/schema.prisma', schema)];
+        replacePrismaProvider(files, 'mongodb');
+        const result = files[0].content.toString('utf-8');
+        expect(result).toContain('@map("_id")');
+        expect(result).toContain('@default(auto())');
+    });
+
+    it('does not add @map("_id") for non-mongodb providers', () => {
+        const files = [makeTemplateFile('prisma/schema.prisma', makePrismaSchema('postgresql'))];
+        replacePrismaProvider(files, 'mysql');
+        const result = files[0].content.toString('utf-8');
+        expect(result).not.toContain('@map("_id")');
+        expect(result).toContain('provider = "mysql"');
+    });
 });

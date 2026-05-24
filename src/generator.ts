@@ -223,6 +223,9 @@ export function generateDockerCompose(opts: ComposeOptions): string {
             dbLines.push(`  ${dbServiceName}:`);
             dbLines.push(`    image: ${dbConfig.image}`);
             dbLines.push(`    restart: unless-stopped`);
+            if (dbConfig.command) {
+                dbLines.push(`    command: ${dbConfig.command}`);
+            }
             dbLines.push(`    ports:`);
             dbLines.push(`      - "${dbConfig.containerPort}:${dbConfig.containerPort}"`);
             dbLines.push(`    environment:`);

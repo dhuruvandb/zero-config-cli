@@ -48,10 +48,10 @@ describe('generateDockerCompose', () => {
         expect(yaml).toContain('"5173:80"');
     });
 
-    it('maps angular frontend to port 4200', () => {
+    it('maps angular frontend to port 4200 with nginx', () => {
         const yaml = generateDockerCompose(makeOpts({ frontend: 'angular' }));
         expect(yaml).toContain('FRONTEND_URL: "http://localhost:4200"');
-        expect(yaml).toContain('"4200:4000"');
+        expect(yaml).toContain('"4200:80"');
     });
 
     it('maps nextjs frontend to port 3000', () => {
@@ -106,7 +106,8 @@ describe('generateDockerCompose', () => {
         const yaml = generateDockerCompose(makeOpts({ database: 'mongodb' }));
         expect(yaml).toContain('mongodb-db:');
         expect(yaml).toContain('image: mongo:7');
-        expect(yaml).toContain('DATABASE_URL: "mongodb://mongodb-db:27017/myapp"');
+        expect(yaml).toContain('--replSet rs0');
+        expect(yaml).toContain('DATABASE_URL: "mongodb://mongodb-db:27017/myapp?replicaSet=rs0&directConnection=true"');
         expect(yaml).toContain('mongodata:');
     });
 

@@ -115,8 +115,8 @@ describe('registry', () => {
             expect(FRONTEND_DOCKER_CONFIG.vuejs.containerPort).toBe(80);
         });
 
-        it('Angular SSR uses port 4000', () => {
-            expect(FRONTEND_DOCKER_CONFIG.angular.containerPort).toBe(4000);
+        it('Angular uses nginx on port 80', () => {
+            expect(FRONTEND_DOCKER_CONFIG.angular.containerPort).toBe(80);
         });
 
         it('Next.js standalone uses port 3000', () => {
@@ -203,7 +203,9 @@ describe('registry', () => {
             const mongo = DATABASE_DOCKER_CONFIG.mongodb;
             expect(mongo.image).toBe('mongo:7');
             expect(mongo.containerPort).toBe(27017);
-            expect(mongo.dbUrlTemplate).toBe('mongodb://{{HOST}}:27017/myapp');
+            expect(mongo.command).toContain('--replSet rs0');
+            expect(mongo.command).not.toContain('--keyFile');
+            expect(mongo.dbUrlTemplate).toBe('mongodb://{{HOST}}:27017/myapp?replicaSet=rs0&directConnection=true');
         });
 
         it('SQL Server config is correct', () => {

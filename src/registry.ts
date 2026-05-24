@@ -188,7 +188,7 @@ export interface DockerContainerConfig {
 /** Docker config for each frontend template (keyed by template key). */
 export const FRONTEND_DOCKER_CONFIG: Record<string, DockerContainerConfig> = {
     react: { containerPort: 80 },    // nginx
-    angular: { containerPort: 4000 },  // SSR Node.js
+    angular: { containerPort: 80 },  // nginx
     vuejs: { containerPort: 80 },    // nginx
     nextjs: { containerPort: 3000 },  // Next.js standalone
 };
@@ -206,6 +206,8 @@ export interface DatabaseDockerConfig {
     envVars: Record<string, string>;
     healthcheck: { test: string[]; interval: string; retries: number };
     volumeName: string;
+    /** Optional container command override (e.g. for replica set setup) */
+    command?: string;
     /** Prisma DATABASE_URL template; use {{HOST}} as placeholder for container hostname */
     dbUrlTemplate: string;
 }
@@ -256,9 +258,14 @@ export const DATABASE_DOCKER_CONFIG: Record<string, DatabaseDockerConfig> = {
         image: 'mongo:7',
         containerPort: 27017,
         envVars: { MONGO_INITDB_DATABASE: 'myapp' },
-        healthcheck: { test: ['CMD-SHELL', 'mongosh --quiet --eval "db.runCommand({ ping: 1 })" || exit 1'], interval: '5s', retries: 5 },
+        command: 'mongod --replSet rs0 --bind_ip_all',
+        healthcheck: {
+            test: ['CMD-SHELL', 'mongosh --quiet --eval "try { rs.status().ok } catch(e) { rs.initiate({_id:\\"rs0\\\", members:[{_id:0, host:\\"localhost:27017\\"}]}).ok }" || exit 1'],
+            interval: '5s',
+            retries: 30,
+        },
         volumeName: 'mongodata',
-        dbUrlTemplate: 'mongodb://{{HOST}}:27017/myapp',
+        dbUrlTemplate: 'mongodb://{{HOST}}:27017/myapp?replicaSet=rs0&directConnection=true',
     },
 };
 
