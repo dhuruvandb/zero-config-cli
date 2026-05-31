@@ -176,6 +176,12 @@ export async function generateProject(opts: GenerateOptions): Promise<GenerateRe
     });
     fs.writeFileSync(path.resolve(outputDir, 'docker-compose.yml'), composeContent, 'utf-8');
 
+    // --- Generate .github/workflows/build-and-test.yml at project root ---
+    const workflowContent = generateCicdWorkflow(frontendFolder, backendFolder);
+    const workflowDir = path.resolve(outputDir, '.github', 'workflows');
+    fs.mkdirSync(workflowDir, { recursive: true });
+    fs.writeFileSync(path.resolve(workflowDir, 'build-and-test.yml'), workflowContent, 'utf-8');
+
     return {
         frontendPath: path.resolve(outputDir, frontendFolder),
         backendPath: path.resolve(outputDir, backendFolder),
@@ -299,6 +305,79 @@ export function generateDockerCompose(opts: ComposeOptions): string {
     }
 
     lines.push('');
+
+    return lines.join('\n');
+}
+
+
+// ---------------------------------------------------------------------------
+// CI/CD workflow generator
+// ---------------------------------------------------------------------------
+
+export function generateCicdWorkflow(
+    frontendFolder: string,
+    backendFolder: string,
+): string {
+    const lines = [
+        'name: Build and Test',
+        '',
+        'on:',
+        '  push:',
+        '    branches: [main]',
+        '  pull_request:',
+        '    branches: [main]',
+        '',
+        'jobs:',
+        '  test-frontend:',
+        '    runs-on: ubuntu-latest',
+        '    steps:',
+        '      - uses: actions/checkout@v4',
+        '      - uses: actions/setup-node@v4',
+        '        with:',
+        '          node-version: "22"',
+        '      - name: Install dependencies',
+        `        working-directory: ./${frontendFolder}`,
+        '        run: npm ci',
+        '      - name: Build frontend',
+        `        working-directory: ./${frontendFolder}`,
+        '        run: npm run build',
+        '      - name: Run tests',
+        `        working-directory: ./${frontendFolder}`,
+        '        run: npm test',
+        '',
+        '  test-backend:',
+        '    runs-on: ubuntu-latest',
+        '    steps:',
+        '      - uses: actions/checkout@v4',
+        '      - uses: actions/setup-node@v4',
+        '        with:',
+        '          node-version: "22"',
+        '      - name: Install dependencies',
+        `        working-directory: ./${backendFolder}`,
+        '        run: npm ci',
+        '      - name: Validate Prisma schema',
+        `        working-directory: ./${backendFolder}`,
+        '        run: npx prisma validate',
+        '      - name: Build backend',
+        `        working-directory: ./${backendFolder}`,
+        '        run: npm run build',
+        '      - name: Run tests',
+        `        working-directory: ./${backendFolder}`,
+        '        run: npm test',
+        '',
+        '  docker:',
+        '    runs-on: ubuntu-latest',
+        '    needs: [test-frontend, test-backend]',
+        '    steps:',
+        '      - uses: actions/checkout@v4',
+        '      - name: Build frontend image',
+        `        working-directory: ./${frontendFolder}`,
+        '        run: docker build -t frontend .',
+        '      - name: Build backend image',
+        `        working-directory: ./${backendFolder}`,
+        '        run: docker build -t backend .',
+        '',
+    ];
 
     return lines.join('\n');
 }
