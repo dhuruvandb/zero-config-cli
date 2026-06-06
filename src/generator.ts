@@ -270,7 +270,7 @@ export function generateDockerCompose(opts: ComposeOptions): string {
     }
     backendLines.push(`      PORT: "${beDocker?.containerPort ?? 5000}"`);
     backendLines.push(`      FRONTEND_URL: "${feUrl}"`);
-    backendLines.push(`    command: sh -c "./node_modules/.bin/prisma db push && ${beDocker?.startCommand ?? 'node dist/index.js'}"`);
+    backendLines.push(`    command: sh -c "./node_modules/.bin/prisma db push --accept-data-loss && ${beDocker?.startCommand ?? 'node dist/index.js'}"`);
     if (dbServiceName) {
         backendLines.push(`    depends_on:`);
         backendLines.push(`      ${dbServiceName}:`);
