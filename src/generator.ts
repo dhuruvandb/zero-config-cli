@@ -244,7 +244,7 @@ export function generateDockerCompose(opts: ComposeOptions): string {
             dbLines.push(`      interval: ${dbConfig.healthcheck.interval}`);
             dbLines.push(`      retries: ${dbConfig.healthcheck.retries}`);
             dbLines.push(`    volumes:`);
-            dbLines.push(`      - ${dbConfig.volumeName}:/var/lib/${opts.database}/data`);
+            dbLines.push(`      - ${dbConfig.volumeName}:${dbConfig.volumeMountPath}`);
 
             volumeLines.push(`  ${dbConfig.volumeName}:`);
         }

@@ -206,6 +206,8 @@ export interface DatabaseDockerConfig {
     envVars: Record<string, string>;
     healthcheck: { test: string[]; interval: string; retries: number };
     volumeName: string;
+    /** Mount path inside the container where DB stores data */
+    volumeMountPath: string;
     /** Optional container command override (e.g. for replica set setup) */
     command?: string;
     /** Prisma DATABASE_URL template; use {{HOST}} as placeholder for container hostname */
@@ -220,6 +222,7 @@ export const DATABASE_DOCKER_CONFIG: Record<string, DatabaseDockerConfig> = {
         envVars: { POSTGRES_USER: 'postgres', POSTGRES_PASSWORD: 'postgres', POSTGRES_DB: 'myapp' },
         healthcheck: { test: ['CMD-SHELL', 'pg_isready -U postgres'], interval: '5s', retries: 5 },
         volumeName: 'pgdata',
+        volumeMountPath: '/var/lib/postgresql/data',
         dbUrlTemplate: 'postgresql://postgres:postgres@{{HOST}}:5432/myapp?schema=public',
     },
     mysql: {
@@ -228,6 +231,7 @@ export const DATABASE_DOCKER_CONFIG: Record<string, DatabaseDockerConfig> = {
         envVars: { MYSQL_ROOT_PASSWORD: 'root', MYSQL_DATABASE: 'myapp' },
         healthcheck: { test: ['CMD-SHELL', 'mysqladmin ping -h localhost -uroot -proot'], interval: '5s', retries: 5 },
         volumeName: 'mysqldata',
+        volumeMountPath: '/var/lib/mysql',
         dbUrlTemplate: 'mysql://root:root@{{HOST}}:3306/myapp',
     },
     mariadb: {
@@ -236,6 +240,7 @@ export const DATABASE_DOCKER_CONFIG: Record<string, DatabaseDockerConfig> = {
         envVars: { MARIADB_ROOT_PASSWORD: 'root', MARIADB_DATABASE: 'myapp' },
         healthcheck: { test: ['CMD-SHELL', 'mysqladmin ping -h localhost -uroot -proot'], interval: '5s', retries: 5 },
         volumeName: 'mariadbdata',
+        volumeMountPath: '/var/lib/mysql',
         dbUrlTemplate: 'mysql://root:root@{{HOST}}:3306/myapp',
     },
     sqlserver: {
@@ -244,6 +249,7 @@ export const DATABASE_DOCKER_CONFIG: Record<string, DatabaseDockerConfig> = {
         envVars: { ACCEPT_EULA: 'Y', MSSQL_SA_PASSWORD: 'your_password', MSSQL_PID: 'Express' },
         healthcheck: { test: ['CMD-SHELL', '/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P your_password -C -Q "SELECT 1" || exit 1'], interval: '10s', retries: 10 },
         volumeName: 'sqldata',
+        volumeMountPath: '/var/opt/mssql',
         dbUrlTemplate: 'sqlserver://{{HOST}}:1433;database=myapp;user=sa;password=your_password;trustServerCertificate=true',
     },
     cockroachdb: {
@@ -252,6 +258,7 @@ export const DATABASE_DOCKER_CONFIG: Record<string, DatabaseDockerConfig> = {
         envVars: { COCKROACH_DATABASE: 'myapp' },
         healthcheck: { test: ['CMD-SHELL', 'cockroach node status --insecure --host=localhost || exit 1'], interval: '5s', retries: 5 },
         volumeName: 'cockroachdata',
+        volumeMountPath: '/cockroach/cockroach-data',
         dbUrlTemplate: 'postgresql://root@{{HOST}}:26257/myapp?schema=public',
     },
     mongodb: {
@@ -265,6 +272,7 @@ export const DATABASE_DOCKER_CONFIG: Record<string, DatabaseDockerConfig> = {
             retries: 30,
         },
         volumeName: 'mongodata',
+        volumeMountPath: '/data/db',
         dbUrlTemplate: 'mongodb://{{HOST}}:27017/myapp?replicaSet=rs0&directConnection=true',
     },
 };
