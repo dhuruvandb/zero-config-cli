@@ -142,8 +142,7 @@ export async function generateProject(opts: GenerateOptions): Promise<GenerateRe
     };
     const dbUrl = defaultDbUrls[dbProvider] || `file:./dev.db`;
 
-    const accessSecret = crypto.randomBytes(32).toString('hex');
-    const refreshSecret = crypto.randomBytes(32).toString('hex');
+    const betterAuthSecret = crypto.randomBytes(32).toString('hex');
 
     const envContent = [
         `# Database Connection (Prisma)`,
@@ -153,13 +152,17 @@ export async function generateProject(opts: GenerateOptions): Promise<GenerateRe
         `PORT=5000`,
         `FRONTEND_URL=http://localhost:5173`,
         ``,
-        `# JWT Secrets (auto-generated — replace in production)`,
-        `ACCESS_TOKEN_SECRET=${accessSecret}`,
-        `REFRESH_TOKEN_SECRET=${refreshSecret}`,
+        `# Better Auth (auto-generated — replace in production)`,
+        `# Generate with: openssl rand -base64 32`,
+        `BETTER_AUTH_SECRET=${betterAuthSecret}`,
         ``,
-        `# JWT Expiry`,
-        `ACCESS_TOKEN_EXPIRY=15m`,
-        `REFRESH_TOKEN_EXPIRY=7d`,
+        `# GitHub OAuth (https://github.com/settings/developers)`,
+        `GITHUB_CLIENT_ID=`,
+        `GITHUB_CLIENT_SECRET=`,
+        ``,
+        `# Google OAuth (https://console.cloud.google.com/apis/credentials)`,
+        `GOOGLE_CLIENT_ID=`,
+        `GOOGLE_CLIENT_SECRET=`,
         ``,
     ].join('\n');
 
